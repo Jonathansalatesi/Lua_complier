@@ -4,6 +4,7 @@ use api::consts::LUA_TNIL;
 use state::lua_state::LuaState;
 use crate::binchunk::binary_chunk::Prototype;
 use crate::api::{lua_vm::LuaVM, lua_state::LuaAPI};
+use crate::compiler::{codegen::compile, disassembly};
 use crate::vm::instruction::Instruction;
 
 mod api;
@@ -13,12 +14,20 @@ mod number;
 mod state;
 mod vm;
 
+fn disasm(chunk: Vec<u8>, chunk_name: &str) {
+    let s_chunk: String = chunk.iter().map(|s|{*s as char}).collect();
+    let proto = compile(s_chunk, chunk_name.to_owned());
+    disassembly(&proto);
+}
+
 fn main() -> io::Result<()> {
     // source: D:\usr\lua-5.3.4_Win64_bin\luac.out
     if env::args().count() >= 0 {
         // let filename = env::args().nth(1).unwrap();
+        // let filename = String::from(r"D:\usr\lua-5.3.4_Win64_bin\luac.out");
         // let filename = String::from(r"D:\usr\orginal_code_analysis\luago-book-master\code\lua\ch02\hello_world.lua");
-        let filename = String::from(r"D:\usr\orginal_code_analysis\luago-book-master\code\lua\ch12\range.lua");
+        let filename = String::from(r"D:\usr\orginal_code_analysis\luago-book-master\code\lua\ch10\factorial.lua");
+        // let filename = String::from(r"D:\usr\orginal_code_analysis\luago-book-master\code\lua\ch06\sum.lua");
         let mut file = File::open(&filename)?;
 
         let mut data = Vec::new();
@@ -33,6 +42,7 @@ fn main() -> io::Result<()> {
         ls.Register("ipairs", __ipairs__);
         ls.Load(data, &filename, "bt");
         ls.Call(0, 0);
+        // disasm(data, &filename);
     }
     Ok(())
 }

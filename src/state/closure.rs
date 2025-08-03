@@ -3,6 +3,7 @@ use crate::{binchunk::binary_chunk::Prototype, number::math::random, api::lua_st
 
 use super::lua_value::LuaValue;
 
+#[derive(Debug)]
 pub struct Closure {
     pub proto: Rc<Prototype>,
     pub rustFunc: Option<RustFn>,

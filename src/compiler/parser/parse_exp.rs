@@ -402,20 +402,19 @@ fn _parse_field(lexer: &mut Lexer) -> (Exp, Exp) {
             return (k, v);
         }
     }
-    (EmptyExp, exp)
+    (NilExp { line: 0 }, exp)
 }
 
 pub fn parse_prefix_exp(lexer: &mut Lexer) -> Exp {
-    let exp: Exp;
-    if lexer.look_ahead() == TOKEN_IDENTIFIER {
+    let exp: Exp = if lexer.look_ahead() == TOKEN_IDENTIFIER {
         let (line, name) = lexer.next_identifier();
-        exp = NameExp {
+        NameExp {
             line, 
             str: name,
-        };
+        }
     } else {
-        exp = parse_parens_exp(lexer);
-    }
+        parse_parens_exp(lexer)
+    };
     _finish_prefix_exp(lexer, exp)
 }
 
@@ -446,7 +445,7 @@ fn _finish_prefix_exp(lexer: &mut Lexer, mut exp: Exp) -> Exp {
                 };
             },
             TOKEN_SEP_COLON | TOKEN_SEP_LPAREN |TOKEN_SEP_LCURLY | TOKEN_STRING => {
-                exp = _finish_func_call_exp(lexer, exp);
+                exp = _finish_func_call_exp(lexer, exp);            // [`:`Name] args
             },
             _ => {
                 return exp;
@@ -472,7 +471,7 @@ fn parse_parens_exp(lexer: &mut Lexer) -> Exp {
 }
 
 fn _finish_func_call_exp(lexer: &mut Lexer, prefix_exp: Exp) -> Exp {
-    let name_exp = _parse_name_exp(lexer);
+    let name_exp = _parse_name_exp(lexer);      // [`:` Name]
     let line = lexer.line();
     let args = _parse_args(lexer);
     let last_line = lexer.line();
@@ -494,7 +493,7 @@ fn _parse_name_exp(lexer: &mut Lexer) -> Exp {
             str: name,
         }
     } else {
-        EmptyExp
+        NilExp { line: 0 }
     }
 }
 

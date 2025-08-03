@@ -1,7 +1,7 @@
 use std::rc::Rc;
 use crate::compiler::ast::exp::Exp::TrueExp;
 use super::super::{ast::{block::Block, stat::Stat, exp::Exp}, lexer::{lexer::Lexer, token::*}};
-use super::super::ast::exp::Exp::{EmptyExp, TableAccessExp};
+use super::super::ast::exp::Exp::TableAccessExp;
 use super::super::ast::stat::Stat::AssignStat;
 use super::parse_exp::*;
 
@@ -211,16 +211,15 @@ fn _finish_for_num_stat(lexer: &mut Lexer, line_of_for: i32, var_name: String) -
     lexer.next_token_of_kind(TOKEN_SEP_COMMA);          // `,`
     let limit_exp = parse_exp(lexer);              // exp
     
-    let mut step_exp: Exp = EmptyExp;
-    if lexer.look_ahead() == TOKEN_SEP_COMMA {          // [
+    let mut step_exp: Exp = if lexer.look_ahead() == TOKEN_SEP_COMMA {          // [
         lexer.next_token();                             // `,`
-        step_exp = parse_exp(lexer);                    // exp
+        parse_exp(lexer)                                // exp
     } else {                                            // ]
-        step_exp = Exp::IntegerExp {
+        Exp::IntegerExp {
             line: lexer.line(),
             val: 1,
-        };
-    }
+        }
+    };
     let (line_of_do, _) = lexer.next_token_of_kind(TOKEN_KW_DO);        // do
     let _block = parse_block(lexer);                                         // block
     lexer.next_token_of_kind(TOKEN_KW_END);                                  // end

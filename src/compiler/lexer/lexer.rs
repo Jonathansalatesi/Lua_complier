@@ -158,6 +158,18 @@ impl Lexer {
                     (self.line, TOKEN_OP_GT, ">".to_string())
                 }
             },
+            '.' => {
+                if self.test("...") {
+                    self.next(3);
+                    return (self.line, TOKEN_VARARG, "...".to_string());
+                } else if self.test("..") {
+                    self.next(2);
+                    return (self.line, TOKEN_OP_CONCAT, "..".to_string());
+                } else if self.chunk.len() == 1 || !is_digit(self.get_nth_char(1)) { 
+                    self.next(1);
+                    return (self.line, TOKEN_SEP_DOT, ".".to_string());
+                }
+            },
             '[' => {
                 return if self.test("[[") || self.test("[=") {
                     (self.line, TOKEN_STRING, self.scan_long_string())
@@ -205,7 +217,7 @@ impl Lexer {
     pub fn next_token_of_kind(&mut self, kind: Token) -> (i32, String) {
         let (line, _kind, token) = self.next_token();
         if _kind != kind {
-            panic!("Syntax error near <{}>", token);
+            panic!("Syntax error near <{}> in line {}", token, line);
         }
         (line, token)
     }

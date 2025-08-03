@@ -3,7 +3,6 @@ use super::block::Block;
 
 #[derive(Clone, Debug)]
 pub enum Exp {
-    EmptyExp,
     NilExp { line: i32 },
     TrueExp { line: i32 },
     FalseExp { line: i32 },

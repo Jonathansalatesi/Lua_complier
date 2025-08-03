@@ -734,9 +734,17 @@ impl LuaVM for LuaState {
     }
 
     fn Fetch(&mut self) -> u32 {
-        let i = self.stack().closure.proto.code[self.stack().pc as usize];
-        self.stack_mut().pc += 1;
-        i
+        // let tmp_pc = self.stack().pc;
+        // let total_len = self.stack().closure.proto.code.len();
+        // if tmp_pc < total_len as i32 {
+            let i = self.stack().closure.proto.code[self.stack().pc as usize];
+            self.stack_mut().pc += 1;
+            i
+        // } else {
+        //     let i = self.stack().closure.proto.code[total_len - 1];
+        //     // self.stack_mut().pc += 1;
+        //     i
+        // }
     }
 
     fn GetConst(&mut self, idx: i32) {

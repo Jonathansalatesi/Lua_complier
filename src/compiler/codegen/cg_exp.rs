@@ -75,7 +75,10 @@ fn cg_table_constructor_exp(fi: &mut FuncInfo, node: &Exp, a: i32) {
     if let Exp::TableConstructorExp { line, last_line, key_exps, val_exps } = node {
         let mut n_arr = 0;
         for key_exp in key_exps.iter() {
-            if let EmptyExp = key_exp {
+            // if let EmptyExp = key_exp {
+            //     n_arr += 1;
+            // } else 
+            if let NilExp {..} = key_exp {
                 n_arr += 1;
             }
         }
@@ -88,7 +91,7 @@ fn cg_table_constructor_exp(fi: &mut FuncInfo, node: &Exp, a: i32) {
         let mut arr_idx = 0;
         for (i, key_exp) in key_exps.iter().enumerate() {
             let val_exp = &val_exps[i];
-            if let EmptyExp = key_exp {
+            if let NilExp { .. } = key_exp {
                 arr_idx += 1;
                 let tmp = fi.alloc_reg();
                 if i == n_exps - 1 && mult_ret {
@@ -208,9 +211,9 @@ fn cg_name_exp(fi: &mut FuncInfo, node: &Exp, a: i32) {
 pub fn cg_table_access_exp(fi: &mut FuncInfo, node: &Exp, a: i32) {
     if let TableAccessExp { last_line, prefix_exp, key_exp } = node {
         let b = fi.alloc_reg();
-        cg_exp(fi, prefix_exp, b, 1);
+        cg_exp(fi, prefix_exp.as_ref(), b, 1);
         let c = fi.alloc_reg();
-        cg_exp(fi, key_exp, c, 1);
+        cg_exp(fi, key_exp.as_ref(), c, 1);
         fi.emit_get_table(a, b, c);
         fi.free_regs(2);
     }
@@ -224,7 +227,7 @@ fn cg_func_call_exp_(fi: &mut FuncInfo, exp: &Exp, a: i32, n: i32) {
 pub fn cg_func_call_exp(fi: &mut FuncInfo, node: &Stat, a: i32, n: i32) {
     if let Stat::FuncCallStat(exp) = node {
         let n_args = prep_func_call(fi, exp, a);
-        fi.emit_call(a, n_args, n);
+        fi.emit_call(a, n_args - 1, n);
     }
 }
 
@@ -234,8 +237,8 @@ fn prep_func_call(fi: &mut FuncInfo, node: &Exp, a: i32) -> i32 {
         let mut last_arg_is_vararg_or_func_call = false;
         
         cg_exp(fi, prefix_exp, a, 1);
-        if let EmptyExp = name_exp.as_ref() {} else if let NameExp { line, str } = name_exp.as_ref() {
-             let c = 0x100 + fi.index_of_constant(&LuaValue::Str(str.to_owned()));
+        if let NilExp { .. } = name_exp.as_ref() {} else if let NameExp { line, str } = name_exp.as_ref() {
+            let c = 0x100 + fi.index_of_constant(&LuaValue::Str(str.to_owned()));
             fi.emit_self(a, a, c);
         }
         
@@ -250,7 +253,7 @@ fn prep_func_call(fi: &mut FuncInfo, node: &Exp, a: i32) -> i32 {
         }
         
         fi.free_regs(n_args as i32);
-        if let EmptyExp = name_exp.as_ref() {} else {
+        if let Exp::NilExp { .. } = name_exp.as_ref() {} else {
             n_args += 1;
         }
         if last_arg_is_vararg_or_func_call {

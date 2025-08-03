@@ -130,7 +130,7 @@ impl FuncInfo {
                 up_values: HashMap::new(),
                 local_names: HashMap::new(),
                 local_vars: vec![],
-                breaks: vec![],
+                breaks: vec![None],
                 insts: vec![],
                 is_vararg: *is_vararg,
                 num_params: par_list.len() as i32,
@@ -164,18 +164,11 @@ impl FuncInfo {
         // pub parent: *mut FuncInfo,
         // pub sub_funcs: Vec<*mut FuncInfo>,
         unsafe {
-            if (*ptr_self).sub_funcs.len() == 0 {
-                let _ = Box::from_raw(ptr_self);
-                return;
-            } else {
-                for ptr_i in (*ptr_self).sub_funcs.iter() {
-                    if !ptr_i.is_null() {
-                        let mut_self = &mut **ptr_i;
-                        mut_self._self_drop();
-                    }
-                }
-                let _ = Box::from_raw(ptr_self);
-                return;
+            for &child in (*ptr_self).sub_funcs.iter() {
+                drop(Box::from_raw(child));
+            }
+            for (_, &local_var) in (*ptr_self).local_names.iter() {
+                drop(Box::from_raw(local_var));
             }
         }
     }
@@ -259,17 +252,11 @@ impl FuncInfo {
     }
     
     pub fn exit_scope(&mut self) {
-        let length_breaks = self.breaks.len();
-        let pending_break_jmps = if  length_breaks > 0 {
-            self.breaks.remove(length_breaks - 1)
-        } else {
-            None
-        };
-        // let pending_break_jmps = self.breaks.remove(length_breaks - 1);
+        let pending_break_jmps = self.breaks.pop();
         let a = self.get_jmp_argA();
-        if let Some(_pending_break_jmps) = pending_break_jmps {
+        if let Some(Some(_pending_break_jmps)) = pending_break_jmps {
             for pc in _pending_break_jmps {
-                let sBx = self.pc() - pc;
+                let sBx = self.pc() - pc - 2;
                 let i = (sBx - MAXARG_sBx) << 14 | a << 6 | OP_JMP as i32;
                 self.insts[pc as usize] =  i as u32;
             }
@@ -334,7 +321,7 @@ impl FuncInfo {
                     (**loc_var).captured = true;
                     return idx as i32;
                 }
-                let __parent = &mut *_parent as &mut FuncInfo;
+                let __parent = &mut *_parent;
                 let uv_idx = __parent.index_of_upVal(name);
                 if uv_idx >= 0 {
                     let idx = self.up_values.len();
@@ -405,7 +392,7 @@ impl FuncInfo {
     pub fn fix_sBx(&mut self, pc: i32, sBx: i32) {
         let i = self.insts[pc as usize];
         let i = i << 18 >> 18;
-        let i = i | ((sBx + MAXARG_sBx)  as u32) << 14;
+        let i = i | (((sBx + MAXARG_sBx)  as u32) << 14);
         self.insts[pc as usize] = i;
     }
 
@@ -532,7 +519,7 @@ impl FuncInfo {
     }
 
     pub fn emit_tfor_loop(&mut self, a: i32, sbx: i32) {
-        self.emit_AsBx(OP_TFORCALL as i32, a, sbx);
+        self.emit_AsBx(OP_TFORLOOP as i32, a, sbx);
     }
     
     // r[a] = op r[b]
@@ -583,11 +570,11 @@ impl FuncInfo {
     }
 }
 
-// impl Drop for FuncInfo {
-//     fn drop(&mut self) {
-//         self._self_drop();
-//     }
-// }
+impl Drop for FuncInfo {
+    fn drop(&mut self) {
+        self._self_drop();
+    }
+}
 
 #[derive(Clone, Debug)]
 pub struct LocalVarInfo {

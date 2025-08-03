@@ -31,7 +31,7 @@ pub fn cg_stat(fi: &mut FuncInfo, node: &Stat) {
             return;
         },
         WhileStat { .. } => {
-            cg_whilt_stat(fi, node)
+            cg_while_stat(fi, node)
         },
         IfStat { .. } => {
             cg_if_stat(fi, node);
@@ -142,7 +142,7 @@ fn cg_do_stat(fi: &mut FuncInfo, node: &Stat) {
     }
 }
 
-fn cg_whilt_stat(fi: &mut FuncInfo, node: &Stat) {
+fn cg_while_stat(fi: &mut FuncInfo, node: &Stat) {
     if let WhileStat { exp, block } = node {
         let pc_before_exp = fi.pc();
         // step 2
@@ -208,8 +208,8 @@ fn cg_if_stat(fi: &mut FuncInfo, node: &Stat) {
                 pc_jmp_to_ends[i] = pc_jmp_to_next_exp;
             }
         }
-        for pc in pc_jmp_to_ends.iter() {
-            fi.fix_sBx(*pc, fi.pc() - *pc);
+        for &pc in pc_jmp_to_ends.iter() {
+            fi.fix_sBx(pc, fi.pc() - pc);
         }
     }
 }
@@ -255,7 +255,7 @@ fn cg_for_in_stat(fi: &mut FuncInfo, node: &Stat) {
         fi.close_open_upvals();
         fi.fix_sBx(pc_jmp_to_TFC, fi.pc() - pc_jmp_to_TFC);
         // step 3
-        let r_generator = fi.slot_of_local_var("for generator");
+        let r_generator = fi.slot_of_local_var("(for generator)");
         fi.emit_tfor_call(r_generator, name_list.len() as i32);
         fi.emit_tfor_loop(r_generator + 2, pc_jmp_to_TFC - fi.pc() - 1);
         fi.exit_scope();
@@ -311,7 +311,8 @@ fn cg_local_var_decl_stat(fi: &mut FuncInfo, node: &Stat) {
 
 pub fn remove_tail_nils(exps: &Vec<Exp>) -> Vec<Exp> {
     for n in (0..=(exps.len() - 1)).rev() {
-        if let Exp::NilExp { .. } = exps[n] {} else if let Exp::EmptyExp = exps[n] {} else {
+        // if let Exp::EmptyExp = exps[n] {} else 
+        if let Exp::NilExp { .. } = exps[n] {} else {
             return exps[0..=n].to_vec();
         }
     }
