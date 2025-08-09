@@ -310,8 +310,11 @@ fn cg_local_var_decl_stat(fi: &mut FuncInfo, node: &Stat) {
 }
 
 pub fn remove_tail_nils(exps: &Vec<Exp>) -> Vec<Exp> {
+    if exps.len() == 0 {
+        return vec![];
+    }
     for n in (0..=(exps.len() - 1)).rev() {
-        // if let Exp::EmptyExp = exps[n] {} else 
+        // if let Exp::EmptyExp = exps[n] {} else
         if let Exp::NilExp { .. } = exps[n] {} else {
             return exps[0..=n].to_vec();
         }

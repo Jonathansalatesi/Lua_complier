@@ -17,7 +17,7 @@ mod vm;
 // Function for disassembling.
 // ================================================================
 fn disassemble_file(chunk: Vec<u8>, chunk_name: &str) {
-    let proto: Prototype = if crate::state::lua_state::is_binary_chunk(&chunk) {
+    let proto: Prototype = if state::lua_state::is_binary_chunk(&chunk) {
         binchunk::undump(chunk)
     } else {
         let s_chunk: String = chunk.iter().map(|s|{*s as char}).collect();
@@ -61,10 +61,10 @@ fn main() -> io::Result<()> {
     
     if filename.len() > 0 {
         let mut file = File::open(&filename)?;
-
+    
         let mut data = Vec::new();
         file.read_to_end(&mut data)?;
-
+    
         let mut ls = LuaState::new();
         ls.Register("print", __print__);
         ls.Register("getmetatable", __getMetatable__);
@@ -78,10 +78,10 @@ fn main() -> io::Result<()> {
     
     // if env::args().count() >= 0 {
     //     // let filename = env::args().nth(1).unwrap();
-    //     let filename = String::from(r"D:\usr\lua-5.3.4_Win64_bin\luac.out");
+    //     // let filename = String::from(r"D:\usr\lua-5.3.4_Win64_bin\luac.out");
     //     // let filename = String::from(r"D:\usr\orginal_code_analysis\luago-book-master\code\lua\ch02\hello_world.lua");
     //     // let filename = String::from(r"D:\usr\orginal_code_analysis\luago-book-master\code\lua\ch10\factorial.lua");
-    //     // let filename = String::from(r"D:\usr\orginal_code_analysis\luago-book-master\code\lua\ch12\e1.lua");
+    //     let filename = String::from(r"D:\usr\orginal_code_analysis\luago-book-master\code\lua\ch12\examples.lua");
     //     // let filename = String::from(r"D:\usr\orginal_code_analysis\luago-book-master\code\lua\ch06\sum.lua");
     //     let mut file = File::open(&filename)?;
     // 
@@ -97,7 +97,7 @@ fn main() -> io::Result<()> {
     //     ls.Register("ipairs", __ipairs__);
     //     ls.Load(data, &filename, "bt");
     //     ls.Call(0, 0);
-    //     // disasm(data, &filename);
+    //     // disassemble_file(data, &filename);
     // }
     Ok(())
 }
