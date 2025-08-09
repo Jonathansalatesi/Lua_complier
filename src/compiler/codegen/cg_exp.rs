@@ -227,13 +227,13 @@ fn cg_func_call_exp_(fi: &mut FuncInfo, exp: &Exp, a: i32, n: i32) {
 pub fn cg_func_call_exp(fi: &mut FuncInfo, node: &Stat, a: i32, n: i32) {
     if let Stat::FuncCallStat(exp) = node {
         let n_args = prep_func_call(fi, exp, a);
-        fi.emit_call(a, n_args - 1, n);
+        fi.emit_call(a, n_args, n);
     }
 }
 
 fn prep_func_call(fi: &mut FuncInfo, node: &Exp, a: i32) -> i32 {
     if let FuncCallExp { line, last_line, prefix_exp, name_exp, args } = node {
-        let mut n_args = args.len();
+        let mut n_args: i32 = args.len() as i32;
         let mut last_arg_is_vararg_or_func_call = false;
         
         cg_exp(fi, prefix_exp, a, 1);
@@ -244,7 +244,7 @@ fn prep_func_call(fi: &mut FuncInfo, node: &Exp, a: i32) -> i32 {
         
         for (i, arg) in args.iter().enumerate() {
             let tmp = fi.alloc_reg();
-            if i == n_args - 1 && is_vararg_or_func_call(arg) {
+            if i as i32 == n_args - 1 && is_vararg_or_func_call(arg) {
                 last_arg_is_vararg_or_func_call = true;
                 cg_exp(fi, arg, tmp, -1);
             } else {
@@ -252,14 +252,14 @@ fn prep_func_call(fi: &mut FuncInfo, node: &Exp, a: i32) -> i32 {
             }
         }
         
-        fi.free_regs(n_args as i32);
-        if let Exp::NilExp { .. } = name_exp.as_ref() {} else {
+        fi.free_regs(n_args);
+        if let NilExp { .. } = name_exp.as_ref() {} else {
             n_args += 1;
         }
         if last_arg_is_vararg_or_func_call {
-            n_args -= 1;
+            n_args = -1;
         }
-        return n_args as i32;
+        return n_args;
     }
     panic!("Exp is not FuncCallExp.");
 }

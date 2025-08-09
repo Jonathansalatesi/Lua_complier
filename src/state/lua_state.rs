@@ -817,7 +817,7 @@ impl LuaVM for LuaState {
     }
 }
 
-fn is_binary_chunk(data: &Vec<u8>) -> bool {
+pub fn is_binary_chunk(data: &Vec<u8>) -> bool {
     if data.len() > 4 {
         if data[..4] == LUA_SIGNATURE {
             return true;
